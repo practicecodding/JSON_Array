@@ -22,7 +22,13 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -38,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     ListView listView;
     HashMap<String,String> hashMap;
     ArrayList <HashMap<String,String> > arrayList = new ArrayList<>();
+    AdView mAdView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,8 +55,41 @@ public class MainActivity extends AppCompatActivity {
 
         progressBar = findViewById(R.id.progressBar);
         listView = findViewById(R.id.listView);
+        mAdView = findViewById(R.id.adView);
+
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET,"https://smhamidulcodding.000webhostapp.com/apps/ad_control.php", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                progressBar.setVisibility(View.GONE);
+                if (response.trim().equals("ShowAd")){
+                    mAdView.setVisibility(View.VISIBLE);
+                    AdRequest adRequest = new AdRequest.Builder().build();
+                    mAdView.loadAd(adRequest);
+                } else {
+                    mAdView.setVisibility(View.GONE);
+                }
+
+                Toast.makeText(MainActivity.this, ""+response, Toast.LENGTH_SHORT).show();
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                progressBar.setVisibility(View.GONE);
+                mAdView.setVisibility(View.GONE);
+            }
+        });
 
         RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
+        requestQueue.add(stringRequest);
+
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
         String url = "https://smhamidulcodding.000webhostapp.com/Json%20Parsing/json_array.json";
         JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
             @Override
@@ -88,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        requestQueue.add(jsonArrayRequest);
+        queue.add(jsonArrayRequest);
 
     }
 
