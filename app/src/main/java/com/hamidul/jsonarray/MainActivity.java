@@ -1,6 +1,7 @@
 package com.hamidul.jsonarray;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Context;
 import android.content.Intent;
@@ -45,6 +46,8 @@ public class MainActivity extends AppCompatActivity {
     HashMap<String,String> hashMap;
     ArrayList <HashMap<String,String> > arrayList = new ArrayList<>();
     AdView mAdView;
+    Toast toast;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         listView = findViewById(R.id.listView);
         mAdView = findViewById(R.id.adView);
+        swipeRefreshLayout = findViewById(R.id.swipeRefresh);
 
         MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
@@ -67,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(String response) {
                 progressBar.setVisibility(View.GONE);
+                swipeRefreshLayout.setRefreshing(false);
                 if (response.trim().equals("ShowAd")){
                     mAdView.setVisibility(View.VISIBLE);
                     AdRequest adRequest = new AdRequest.Builder().build();
@@ -75,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
                     mAdView.setVisibility(View.GONE);
                 }
 
-                Toast.makeText(MainActivity.this, ""+response, Toast.LENGTH_SHORT).show();
+                toastMessage(response);
 
             }
         }, new Response.ErrorListener() {
@@ -89,46 +94,14 @@ public class MainActivity extends AppCompatActivity {
         RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
         requestQueue.add(stringRequest);
 
-        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-        String url = "https://smhamidulcodding.000webhostapp.com/Json%20Parsing/json_array.json";
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
+        loadServer();
+
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onResponse(JSONArray response) {
-                progressBar.setVisibility(View.GONE);
-
-                for (int x=0; x<response.length(); x++){
-
-                    try {
-                        JSONObject jsonObject = response.getJSONObject(x);
-
-                        String name = jsonObject.getString("name");
-                        String video_id = jsonObject.getString("video_id");
-                        int sl = x+1;
-
-                        hashMap = new HashMap<>();
-                        hashMap.put("name",name);
-                        hashMap.put("video_id",video_id);
-                        arrayList.add(hashMap);
-
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                }//for loop end
-
-                MyAdapter myAdapter = new MyAdapter();
-                listView.setAdapter(myAdapter);
-
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                progressBar.setVisibility(View.GONE);
-                Toast.makeText(MainActivity.this, "Something Wrong", Toast.LENGTH_SHORT).show();
+            public void onRefresh() {
+                loadServer();
             }
         });
-
-        queue.add(jsonArrayRequest);
 
     }
 
@@ -182,6 +155,56 @@ public class MainActivity extends AppCompatActivity {
 
             return myView;
         }
+    }
+
+    private void loadServer (){
+        RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+        String url = "https://smhamidulcodding.000webhostapp.com/Json%20Parsing/json_array.json";
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+                progressBar.setVisibility(View.GONE);
+                swipeRefreshLayout.setRefreshing(false);
+
+                arrayList = new ArrayList<>();
+                for (int x=0; x<response.length(); x++){
+
+                    try {
+                        JSONObject jsonObject = response.getJSONObject(x);
+
+                        String name = jsonObject.getString("name");
+                        String video_id = jsonObject.getString("video_id");
+
+                        hashMap = new HashMap<>();
+                        hashMap.put("name",name);
+                        hashMap.put("video_id",video_id);
+                        arrayList.add(hashMap);
+
+                    } catch (JSONException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                }//for loop end
+
+                MyAdapter myAdapter = new MyAdapter();
+                listView.setAdapter(myAdapter);
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                progressBar.setVisibility(View.GONE);
+                swipeRefreshLayout.setRefreshing(false);
+                Toast.makeText(MainActivity.this, "Something Wrong", Toast.LENGTH_SHORT).show();
+            }
+        });
+        queue.add(jsonArrayRequest);
+    }
+
+    public void toastMessage (String message){
+        if (toast!=null) toast.cancel();
+        toast = Toast.makeText(getApplicationContext(),message,Toast.LENGTH_SHORT);
+        toast.show();
     }
 
 }

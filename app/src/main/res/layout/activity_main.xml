@@ -31,6 +31,10 @@
 
     </LinearLayout>
 
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -54,13 +58,25 @@
         >
     </com.google.android.gms.ads.AdView>
 
-    <ListView
-        android:id="@+id/listView"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="none"
-        android:listSelector="@android:color/transparent"
-        android:layout_marginBottom="20dp"
-        />
+        android:id="@+id/swipeRefresh"
+        >
+
+        <ListView
+            android:id="@+id/listView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="none"
+            android:listSelector="@android:color/transparent"
+            android:layout_marginBottom="20dp"
+            />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    </LinearLayout>
+
+
 
 </LinearLayout>
